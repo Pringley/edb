@@ -19,6 +19,7 @@ from Crypto.Util import Counter
 
 BLOCK_BYTES = 32 # 256 bits
 MATCH_BYTES = 4  # only last 32 bits of message are checked during search
+LEFT_BYTES = BLOCK_BYTES - MATCH_BYTES
 
 def test():
     """Run basic test cases."""
@@ -58,6 +59,19 @@ def test():
     word = b"test"
     ciphertext = client.encrypt_word(index, word)
     assert client.decrypt_word(index, ciphertext) == word
+
+    # Test basic server search.
+    words = [b'apple', b'banana', b'strawberry']
+    server = Server()
+    for index, word in enumerate(words):
+        ciphertext = client.encrypt_word(index, word)
+        server.add_word(ciphertext)
+    search_word = b'banana'
+    preword, word_key = client.search_parameters(search_word)
+    results = server.search(preword, word_key)
+    plaintexts = [client.decrypt_word(index, ciphertext)
+                  for index, ciphertext in results]
+    assert search_word in plaintexts
 
 class Client:
     """Client to access an EDB.
@@ -110,6 +124,13 @@ class Client:
         preword = self.stream_decrypt(index, ciphertext)
         return self.postprocess(preword)
 
+    def search_parameters(self, word):
+        """Return the search parameters (preword, word_key) for word."""
+        preword = self.preprocess(word)
+        left_part = self.left_part(preword)
+        word_key = self.word_key(left_part)
+        return preword, word_key
+
     def stream_encrypt(self, index, preword):
         """Encrypt a (preprocessed) word at index."""
         left_part = self.left_part(preword)
@@ -131,7 +152,7 @@ class Client:
         """Return the stream prefix for the word at index."""
         return self.backend.prgenerator(self.keys['seed'],
                                 index,
-                                length=(BLOCK_BYTES - MATCH_BYTES))
+                                length=(LEFT_BYTES))
 
     def block_encrypt(self, plaintext):
         """Return the deterministically preencrypted word."""
@@ -161,7 +182,42 @@ class Client:
 
     def left_part(self, block):
         """Return the left_part of a block."""
-        return block[:(BLOCK_BYTES - MATCH_BYTES)]
+        return block[:(LEFT_BYTES)]
+
+class Server:
+    """EDB server."""
+
+    def __init__(self, backend=None):
+        """Initialize the server."""
+        self.words = []
+        self.backend = backend or CryptoBackend()
+
+    def add_word(self, encrypted_word):
+        """Add an encrypted word to the database."""
+        self.words.append(encrypted_word)
+
+    def search(self, preword, word_key):
+        """Search for a word in the database.
+
+        Returns a list of (index, ciphertext) pairs for potential matches.
+
+        Parameters:
+
+        preword
+          The pre-encrypted padded word for which to search.
+
+        word_key
+          The word-specific key to the pseudorandom function.
+
+        """
+        matches = []
+        for index, ciphertext in enumerate(self.words):
+            block = self.backend.xor(ciphertext, preword)
+            prefix, suffix = block[:LEFT_BYTES], block[LEFT_BYTES:]
+            hashed_prefix = self.backend.prfunction(word_key, prefix, length=MATCH_BYTES)
+            if hashed_prefix == suffix:
+                matches.append((index, ciphertext))
+        return matches
 
 class CryptoBackend:
     """Default CryptoBackend based on the cryptography package."""
