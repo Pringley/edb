@@ -43,7 +43,7 @@ def test():
 
     # Test pseudorandom generator.
     for i in range(10):
-        block = backend.prg(client.keys['seed'], i)
+        block = backend.prgenerator(client.keys['seed'], i)
         assert isinstance(block, bytes)
         assert len(block) == BLOCK_BYTES
 
@@ -52,6 +52,12 @@ def test():
     null_block = b"\0" * BLOCK_BYTES
     assert backend.xor(null_block, test_block) == test_block
     assert backend.xor(test_block, test_block) == null_block
+
+    # Test client encrypt/decrypt.
+    index = 3
+    word = b"test"
+    ciphertext = client.encrypt_word(index, word)
+    assert client.decrypt_word(index, ciphertext) == word
 
 class Client:
     """Client to access an EDB.
@@ -94,15 +100,68 @@ class Client:
         self.keys = self.backend.generate_keys(passphrase, self.KEY_NAMES)
         self.connected = False
 
-    def store_document(self, document):
-        """Store a document on the server.
+    def encrypt_word(self, index, word):
+        """Encrypt a word (to put in the given index)."""
+        preword = self.preprocess(word)
+        return self.stream_encrypt(index, preword)
 
-        Parameters:
+    def decrypt_word(self, index, ciphertext):
+        """Decrypt ciphertext from a given index."""
+        preword = self.stream_decrypt(index, ciphertext)
+        return self.postprocess(preword)
 
-        document
-          a list of byte strings
+    def stream_encrypt(self, index, preword):
+        """Encrypt a (preprocessed) word at index."""
+        left_part = self.left_part(preword)
+        word_key = self.word_key(left_part)
+        stream_prefix = self.stream_prefix(index)
+        stream_suffix = self.stream_suffix(word_key, stream_prefix)
+        return self.backend.xor(preword, stream_prefix + stream_suffix)
 
-        """
+    def stream_decrypt(self, index, ciphertext):
+        """Decrypt ciphertext at index, return (preprocessed) word."""
+        left_ciphertext = self.left_part(ciphertext)
+        stream_prefix = self.stream_prefix(index)
+        left_part = self.backend.xor(left_ciphertext, stream_prefix)
+        word_key = self.word_key(left_part)
+        stream_suffix = self.stream_suffix(word_key, stream_prefix)
+        return self.backend.xor(ciphertext, stream_prefix + stream_suffix)
+
+    def stream_prefix(self, index):
+        """Return the stream prefix for the word at index."""
+        return self.backend.prgenerator(self.keys['seed'],
+                                index,
+                                length=(BLOCK_BYTES - MATCH_BYTES))
+
+    def block_encrypt(self, plaintext):
+        """Return the deterministically preencrypted word."""
+        return self.backend.encrypt(self.keys['encrypt'], plaintext)
+
+    def block_decrypt(self, ciphertext):
+        """Return the decrypted block."""
+        return self.backend.decrypt(self.keys['encrypt'], ciphertext)
+
+    def word_key(self, left_part):
+        """Return the word-specific key given its left_part."""
+        return self.backend.prfunction(self.keys['hash'], left_part)
+
+    def stream_suffix(self, word_key, stream_prefix):
+        """Return the last bytes of the stream cipher."""
+        return self.backend.prfunction(word_key, stream_prefix, MATCH_BYTES)
+
+    def preprocess(self, word):
+        """Pad and preencrypt a raw word."""
+        padded_word = self.backend.pad(word)
+        return self.block_encrypt(padded_word)
+
+    def postprocess(self, preword):
+        """Postdecrypt and unpad a (preproccessed) word."""
+        padded_word = self.block_decrypt(preword)
+        return self.backend.unpad(padded_word)
+
+    def left_part(self, block):
+        """Return the left_part of a block."""
+        return block[:(BLOCK_BYTES - MATCH_BYTES)]
 
 class CryptoBackend:
     """Default CryptoBackend based on the cryptography package."""
@@ -120,7 +179,7 @@ class CryptoBackend:
             passphrase, b"",
             dkLen=BLOCK_BYTES*len(names),
             count=10000,
-            prf=self.prf,
+            prf=self.prfunction,
         )
         keys = {
             name: key_material[index:index+BLOCK_BYTES]
@@ -129,13 +188,13 @@ class CryptoBackend:
         return keys
 
     @staticmethod
-    def prg(key, index, length=BLOCK_BYTES, message=None):
+    def prgenerator(key, index, length=None, message=None):
         """Pseudorandom generator.
 
         Return a pseudorandom 256-bit block.
 
         key
-          byte string represeting HMAC key
+          byte string represeting key
 
         index
           integer representing counter index
@@ -148,13 +207,13 @@ class CryptoBackend:
 
         """
         if message is None:
-            message = b'\0' * length
+            message = b'\0' * (length or BLOCK_BYTES)
         counter = Counter.new(AES.block_size * 8, initial_value=index)
         cipher = AES.new(key, AES.MODE_CTR, counter=counter)
         return cipher.encrypt(message)
 
     @staticmethod
-    def prf(key, message):
+    def prfunction(key, message, length=None):
         """Pseudorandom function.
 
         Create a 256-bit HMAC of a message using key.
@@ -162,13 +221,19 @@ class CryptoBackend:
         Parameters:
 
         key
-          byte string represeting HMAC key
+          byte string represeting key
 
         message
           byte string of data to hash
 
+        length
+          (optional) bytes to return, default 32
+
         """
-        return HMAC.HMAC(key, message, SHA256).digest()
+        digest = HMAC.HMAC(key, message, SHA256).digest()
+        if length is not None:
+            return digest[:length]
+        return digest
 
     def encrypt(self, key, message):
         """Deterministic encryption function.
