@@ -47,6 +47,12 @@ def test():
         assert isinstance(block, bytes)
         assert len(block) == BLOCK_BYTES
 
+    # Test xor function.
+    test_block = b"t"  * BLOCK_BYTES
+    null_block = b"\0" * BLOCK_BYTES
+    assert backend.xor(null_block, test_block) == test_block
+    assert backend.xor(test_block, test_block) == null_block
+
 class Client:
     """Client to access an EDB.
 
@@ -213,6 +219,18 @@ class CryptoBackend:
             raise TypeError("expected 256-bit padded message")
         padlen = message[-1]
         return message[:-padlen]
+
+    @staticmethod
+    def xor(original, *others):
+        """Perform xor on one or more byte strings of equal length."""
+        size = len(original)
+        result = bytearray(original)
+        for other in others:
+            if len(other) != size:
+                raise TypeError("mismatched lengths for xor")
+            for index in range(size):
+                result[index] ^= other[index]
+        return bytes(result)
 
 if __name__ == '__main__':
     test()
