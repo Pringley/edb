@@ -15,15 +15,19 @@ from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
 from Crypto.Protocol import KDF
+from Crypto.Util import Counter
 
 BLOCK_BYTES = 32 # 256 bits
+MATCH_BYTES = 4  # only last 32 bits of message are checked during search
 
 def test():
+    """Run basic test cases."""
     passphrase = b"hunter2 is not a good password"
     backend = CryptoBackend()
     client = Client(passphrase)
 
     def p64(string):
+        """Print bytes in base64."""
         print(base64.b64encode(string))
 
     # Make sure keys are generated properly.
@@ -36,6 +40,12 @@ def test():
     message = b"7" * BLOCK_BYTES
     c = backend.encrypt(client.keys['encrypt'], message)
     assert backend.decrypt(client.keys['encrypt'], c) == message
+
+    # Test pseudorandom generator.
+    for i in range(10):
+        block = backend.prg(client.keys['seed'], i)
+        assert isinstance(block, bytes)
+        assert len(block) == BLOCK_BYTES
 
 class Client:
     """Client to access an EDB.
@@ -111,6 +121,31 @@ class CryptoBackend:
             for index, name in enumerate(names)
         }
         return keys
+
+    @staticmethod
+    def prg(key, index, length=BLOCK_BYTES, message=None):
+        """Pseudorandom generator.
+
+        Return a pseudorandom 256-bit block.
+
+        key
+          byte string represeting HMAC key
+
+        index
+          integer representing counter index
+
+        length
+          (optional) number of bytes to output, default 32 or len(message)
+
+        message
+          (optional) byte string to be XOR'd with the input
+
+        """
+        if message is None:
+            message = b'\0' * length
+        counter = Counter.new(AES.block_size * 8, initial_value=index)
+        cipher = AES.new(key, AES.MODE_CTR, counter=counter)
+        return cipher.encrypt(message)
 
     @staticmethod
     def prf(key, message):
