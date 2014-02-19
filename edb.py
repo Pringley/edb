@@ -33,7 +33,7 @@ def test():
         assert len(key) == BLOCK_BYTES
 
     # Test encrypt/decrypt.
-    message = b"I've got a secret ... I've been hiding ...."
+    message = b"7" * BLOCK_BYTES
     c = backend.encrypt(client.keys['encrypt'], message)
     assert backend.decrypt(client.keys['encrypt'], c) == message
 
@@ -100,7 +100,6 @@ class CryptoBackend:
         passphrase **must** be very strong.)
 
         """
-        rng = Random.new()
         key_material = KDF.PBKDF2(
             passphrase, b"",
             dkLen=BLOCK_BYTES*len(names),
@@ -139,12 +138,13 @@ class CryptoBackend:
           byte string represeting encryption key
 
         message
-          byte string of data to encrypt
+          byte string of length 32 (exactly 256 bits)
 
         """
-        plaintext = self.pad(message)
+        if len(message) != BLOCK_BYTES:
+            raise TypeError("expected 256-bit message")
         cipher = AES.new(key, AES.MODE_CBC, b"\0"*AES.block_size)
-        return cipher.encrypt(plaintext)
+        return cipher.encrypt(message)
 
     def decrypt(self, key, ciphertext):
         """Decryption function.
@@ -155,22 +155,27 @@ class CryptoBackend:
           byte string represeting decryption key
 
         ciphertext
-          byte string of data to decrypt
+          byte string of length 32 (exactly 256 bits)
 
         """
+        if len(ciphertext) != BLOCK_BYTES:
+            raise TypeError("expected 256-bit ciphertext")
         cipher = AES.new(key, AES.MODE_CBC, b"\0"*AES.block_size)
-        plaintext = cipher.decrypt(ciphertext)
-        return self.unpad(plaintext)
+        return cipher.decrypt(ciphertext)
 
     @staticmethod
     def pad(message):
-        """Pad message using PKCS#7."""
-        padlen = AES.block_size - (len(message) % AES.block_size)
+        """Pad message to exactly 256 bits using PKCS#7 variant."""
+        if len(message) >= BLOCK_BYTES:
+            raise TypeError("message must be less than 256 bits")
+        padlen = BLOCK_BYTES - len(message)
         return message + bytes([padlen]) * padlen
 
     @staticmethod
     def unpad(message):
-        """Pad message using PKCS#7."""
+        """Unpad message."""
+        if len(message) != BLOCK_BYTES:
+            raise TypeError("expected 256-bit padded message")
         padlen = message[-1]
         return message[:-padlen]
 
