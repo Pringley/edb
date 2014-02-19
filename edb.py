@@ -210,14 +210,16 @@ class Server:
           The word-specific key to the pseudorandom function.
 
         """
-        matches = []
-        for index, ciphertext in enumerate(self.words):
-            block = self.backend.xor(ciphertext, preword)
-            prefix, suffix = block[:LEFT_BYTES], block[LEFT_BYTES:]
-            hashed_prefix = self.backend.prfunction(word_key, prefix, length=MATCH_BYTES)
-            if hashed_prefix == suffix:
-                matches.append((index, ciphertext))
-        return matches
+        return [(index, ciphertext)
+                for index, ciphertext in enumerate(self.words)
+                if self.match(ciphertext, preword, word_key)]
+
+    def match(self, ciphertext, preword, word_key):
+        """Return True if the ciphertext is preword encrypted with word_key."""
+        block = self.backend.xor(ciphertext, preword)
+        prefix, suffix = block[:LEFT_BYTES], block[LEFT_BYTES:]
+        hashed_prefix = self.backend.prfunction(word_key, prefix, length=MATCH_BYTES)
+        return hashed_prefix == suffix
 
 class CryptoBackend:
     """Default CryptoBackend based on the cryptography package."""
