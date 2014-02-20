@@ -2,11 +2,22 @@ Proof of concept searchable encrypted database.
 
 Based on the final scheme described by Dawn Song et al.[^song]
 
+Install requirements using
+
+    sudo apt-get install python3
+    sudo pip3 install pycrypto==2.6.1
+
 Run test cases using
 
     python3 test.py
 
 Tested under Python 3.3.2 on OS X 10.9, using pycrypto 2.6.1.
+
+Important files:
+
+-   `test.py` -- test cases and example usage
+-   `edb/client.py` -- client-side encryption/decryption
+-   `edb/server.py` -- server-side ciphertext-only search
 
 [^song]: Song, Dawn Xiaoding, David Wagner, and Adrian Perrig. "Practical
 techniques for searches on encrypted data." In *Security and Privacy*, 2000.
