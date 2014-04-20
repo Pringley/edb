@@ -1,0 +1,19 @@
+#!/bin/bash
+
+cmd_exists () {
+    command -v $1 >/dev/null 2>&1
+}
+
+if ! cmd_exists python3.4 ; then
+    echo "Requires Python 3.4."
+    echo "Download at https://www.python.org/ftp/python/3.4.0/Python-3.4.0.tgz"
+fi
+
+python3.4 -mvenv .
+bin/pip install -r requirements.txt
+if [ $? -eq 0 ]
+then
+    echo "Bootstrap completed successfully."
+else
+    echo "Something went wrong -- bootstrapping failed."
+fi

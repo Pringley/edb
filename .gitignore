@@ -2,4 +2,12 @@ __pycache__
 *.pyc
 .*.swp
 *~
+Session.vim
 .DS_Store
+bin
+include
+lib
+pyvenv.cfg
+.vagrant
+Python-*.tgz
+Python-*
