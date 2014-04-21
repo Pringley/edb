@@ -16,6 +16,7 @@ if sh.git.status('-s').strip():
 
 sh.git.fetch('upstream')
 sh.git.checkout('master')
+sh.git.add('--all')
 sh.git.reset('--hard')
 sh.git.checkout('-b', newbranch, 'upstream/master')
 
