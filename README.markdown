@@ -19,6 +19,12 @@ Setup the development environment by running the boostrap script.
 
     script/bootstrap
 
+## Test
+
+Use the provided test script to run unit tests.
+
+    script/test
+
 ## Contributing
 
 1.  [Fork this repository](https://github.com/Pringley/edb-concept/fork) on
