@@ -1,0 +1,34 @@
+#! bin/python
+import sys
+import getpass
+
+import github3
+import sh
+
+ORIGIN_USER = 'Pringley'
+ORIGIN_REPO = 'edb-concept'
+
+username = input('GitHub username: ')
+password = getpass.getpass('GitHub password: ')
+
+hub = github3.login(username, password=password,
+        two_factor_callback=lambda: input('Enter 2-factor code:' ))
+
+if hub.repository(username, ORIGIN_REPO):
+    print('Already forked this repo!', file=sys.stderr)
+    exit(1)
+
+new_repo = hub.repository(ORIGIN_USER, ORIGIN_REPO).create_fork()
+
+if not new_repo:
+    print('Error: could not fork.', file=sys.stderr)
+    exit(1)
+
+print('Fork successful.')
+sh.git.remote.remove("origin")
+sh.git.remote.remove("upstream")
+sh.git.remote.add("origin", "https://github.com/{}/{}.git"
+        .format(username, ORIGIN_REPO))
+sh.git.remote.add("upstream", "https://github.com/{}/{}.git"
+        .format(ORIGIN_USER, ORIGIN_REPO))
+print('Updated remotes for `origin` and `upstream`.')

@@ -1,0 +1,35 @@
+#! bin/python
+import sys
+import getpass
+
+import github3
+import sh
+
+ORIGIN_USER = 'Pringley'
+ORIGIN_REPO = 'edb-concept'
+
+if len(sys.argv) >= 2:
+    branch = sys.argv[1]
+else:
+    branch = sh.git('symbolic-ref', '--short', '-q', 'HEAD').strip()
+    if not branch:
+        print('No branch specified, and not currently on a branch.',
+                file=sys.stderr)
+        exit(1)
+
+username = input('GitHub username: ')
+password = getpass.getpass('GitHub password: ')
+title = input('Enter title for pull request: ')
+
+hub = github3.login(username, password=password,
+        two_factor_callback=lambda: input('Enter 2-factor code:' ))
+
+repo = hub.repository(ORIGIN_USER, ORIGIN_REPO)
+pull = repo.create_pull(title, 'master', '{}:{}'.format(username, branch))
+
+if not pull:
+    print('Error: could not create pull request.', file=sys.stderr)
+    exit(1)
+
+print('Pull request successful.')
+print('View online: {}'.format(pull.html_url))

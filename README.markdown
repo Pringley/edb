@@ -27,29 +27,35 @@ Use the provided test script to run unit tests.
 
 ## Contributing
 
-1.  [Fork this repository](https://github.com/Pringley/edb-concept/fork) on
-    GitHub.
+1.  Download this repository from GitHub and bootstrap the environment.
 
-2.  Clone your version of the repository.
+        git clone https://github.com/Pringley/edb-concept
+        cd edb-concept
+        script/bootstrap
 
-        git clone https://github.com/YOURUSERNAME/edb-concept
+2.  Fork this repository with the provided script.
 
-3.  Set the upstream to the original repository.
+        script/fork
 
-        git remote add upstream https://github.com/Pringley/edb-concept.git
+    This creates your own personal version of the code on GitHub. Your changes
+    will be applied to your own repo, then merged back in via a Pull Request
+    (see below).
 
-    This allows you to update your master branch with the following command:
+3.  Make each logical set of changes in a separate feature branch.
 
-        git pull upstream master:master
+    You can use the following shortcut script to create feature branches from
+    the latest `master`:
 
-4.  Develop in a separate feature branch. Create a new branch with:
+        script/newfeature NEWBRANCHNAME
 
-        git checkout master
-        git checkout -b NEWBRANCH
+    Make a commit for each individual change. Your commits will be saved to
+    your local `NEWBRANCH`.
 
-    Push your changes using:
+        git add changed_file1 changed_file2
+        git commit --message="SUMMARY OF CHANGES"
 
-        git push origin NEWBRANCH:NEWBRANCH
+4.  When your feature is complete, push your changes back to GitHub with the
+    following commands:
 
-5.  Submit your changes for review as a
-    [Pull Request](https://github.com/Pringley/edb-concept/compare).
+        git push origin NEWBRANCH
+        script/pullrequest NEWBRANCH
