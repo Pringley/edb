@@ -1,1 +1,5 @@
+github3.py==0.8.2
 pycrypto==2.6.1
+requests==2.2.1
+sh==1.09
+uritemplate.py==0.3.0
