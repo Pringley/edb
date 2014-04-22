@@ -6,7 +6,7 @@ import github3
 import sh
 
 ORIGIN_USER = 'Pringley'
-ORIGIN_REPO = 'edb-concept'
+ORIGIN_REPO = 'edb'
 
 username = input('GitHub username: ')
 password = getpass.getpass('GitHub password: ')

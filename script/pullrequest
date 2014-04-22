@@ -6,7 +6,7 @@ import github3
 import sh
 
 ORIGIN_USER = 'Pringley'
-ORIGIN_REPO = 'edb-concept'
+ORIGIN_REPO = 'edb'
 
 if len(sys.argv) >= 2:
     branch = sys.argv[1]

@@ -1,4 +1,4 @@
-Proof of concept searchable encrypted database.
+Searchable encrypted database.
 
 Based on the final scheme described by Dawn Song et al.[^song]
 
@@ -29,8 +29,8 @@ Use the provided test script to run unit tests.
 
 1.  Download this repository from GitHub and bootstrap the environment.
 
-        git clone https://github.com/Pringley/edb-concept
-        cd edb-concept
+        git clone https://github.com/Pringley/edb
+        cd edb
         script/bootstrap
 
 2.  Fork this repository with the provided script.
