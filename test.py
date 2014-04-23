@@ -2,7 +2,7 @@
 
 from unittest import TestCase, main
 
-from edb import crypto, pallier, constants, Client, Server
+from edb import crypto, paillier, constants, Client, Server
 
 PASSPHRASE = b'hunter2 is not a good password'
 
@@ -73,7 +73,7 @@ class TestCrypto(TestCase):
         self.assertEqual(crypto.xor(null_block, test_block), test_block)
         self.assertEqual(crypto.xor(test_block, test_block), null_block)
 
-    def test_pallier(self):
+    def test_paillier(self):
         p = 293
         q = 433
         g = 6497955158
@@ -83,16 +83,16 @@ class TestCrypto(TestCase):
 
         # test encrypt(decrypt(x)) == x
         ptxt_original = 521
-        ctxt = pallier.encrypt(n, g, ptxt_original)
-        ptxt = pallier.decrypt(lmb, mu, n, ctxt)
+        ctxt = paillier.encrypt(n, g, ptxt_original)
+        ptxt = paillier.decrypt(lmb, mu, n, ctxt)
         self.assertEqual(ptxt_original, ptxt)
 
         # test homomorphism
         ptxt1 = 14
         ptxt2 = 19
-        ctxt1 = pallier.encrypt(n, g, ptxt1)
-        ctxt2 = pallier.encrypt(n, g, ptxt2)
-        final_ptxt = pallier.decrypt(lmb, mu, n, ctxt1 * ctxt2)
+        ctxt1 = paillier.encrypt(n, g, ptxt1)
+        ctxt2 = paillier.encrypt(n, g, ptxt2)
+        final_ptxt = paillier.decrypt(lmb, mu, n, ctxt1 * ctxt2)
         self.assertEqual(final_ptxt, ptxt1 + ptxt2)
 
 if __name__ == '__main__':
