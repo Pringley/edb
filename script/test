@@ -1,2 +1,2 @@
 #!/bin/bash
-bin/python -m unittest test
+venv/bin/python -m unittest test

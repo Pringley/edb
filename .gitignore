@@ -11,3 +11,4 @@ pyvenv.cfg
 .vagrant
 Python-*
 virtualenv-*
+venv
