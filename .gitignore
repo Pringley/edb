@@ -9,5 +9,5 @@ include
 lib
 pyvenv.cfg
 .vagrant
-Python-*.tgz
 Python-*
+virtualenv-*
