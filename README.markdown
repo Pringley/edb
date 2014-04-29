@@ -15,9 +15,24 @@ S&P 2000.  Proceedings. 2000 IEEE Symposium on, pp. 44-55. IEEE, 2000.
 
 ## Setup
 
-Setup the development environment by running the boostrap script.
+If you haven't already, install Python 3.4 with development headers. To install
+from source, run:
 
-    script/bootstrap
+    tar xzf Python-3.4.0.tgz
+    cd Python-3.4.0
+    ./configure
+    make
+    sudo make install
+
+Then setup the development environment by running the boostrap script provided
+with this project.
+
+    git clone https://github.com/Pringley/edb.git
+    cd edb
+    python3.4 bootstrap.py
+
+This will create a [virtual environment](http://virtualenv.org) in `venv/` with
+the required packages installed within.
 
 ## Test
 
@@ -29,9 +44,9 @@ Use the provided test script to run unit tests.
 
 1.  Download this repository from GitHub and bootstrap the environment.
 
-        git clone https://github.com/Pringley/edb
+        git clone https://github.com/Pringley/edb.git
         cd edb
-        script/bootstrap
+        python3.4 bootstrap.py
 
 2.  Fork this repository with the provided script.
 
