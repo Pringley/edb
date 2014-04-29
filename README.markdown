@@ -10,19 +10,18 @@ S&P 2000.  Proceedings. 2000 IEEE Symposium on, pp. 44-55. IEEE, 2000.
 
 -   Python 3.4 with development headers (e.g. `Python.h`)
 
-    Install from source [at the Python
+    The source is available [at the Python
     website](https://www.python.org/ftp/python/3.4.0/Python-3.4.0.tgz)
 
+    To install from source, download from the link above and run:
+
+        tar xzf Python-3.4.0.tgz
+        cd Python-3.4.0
+        ./configure
+        make
+        sudo make install
+
 ## Setup
-
-If you haven't already, install Python 3.4 with development headers. To install
-from source, run:
-
-    tar xzf Python-3.4.0.tgz
-    cd Python-3.4.0
-    ./configure
-    make
-    sudo make install
 
 Then setup the development environment by running the boostrap script provided
 with this project.
@@ -36,11 +35,14 @@ the required packages installed within.
 
 ## Test
 
-Use the provided test script to run unit tests.
+Use the built-in Python unittest module to run the tests.
 
-    script/test
+    venv/bin/python -m unittest test
 
-## Contributing
+## Contributing workflow
+
+The following steps will work for users with push permissions on this
+repository.
 
 1.  Download this repository from GitHub and bootstrap the environment.
 
@@ -48,20 +50,13 @@ Use the provided test script to run unit tests.
         cd edb
         python3.4 bootstrap.py
 
-2.  Fork this repository with the provided script.
+2.  Make each logical set of changes in a separate feature branch.
 
-        script/fork
+    Run the following commands to create a new feature branch (replace
+    `NEWBRANCH` with the name of your feature):
 
-    This creates your own personal version of the code on GitHub. Your changes
-    will be applied to your own repo, then merged back in via a Pull Request
-    (see below).
-
-3.  Make each logical set of changes in a separate feature branch.
-
-    You can use the following shortcut script to create feature branches from
-    the latest `master`:
-
-        script/newfeature NEWBRANCHNAME
+        git fetch origin
+        git checkout -b NEWBRANCH origin/master
 
     Make a commit for each individual change. Your commits will be saved to
     your local `NEWBRANCH`.
@@ -73,4 +68,33 @@ Use the provided test script to run unit tests.
     following commands:
 
         git push origin NEWBRANCH
-        script/pullrequest NEWBRANCH
+
+    Then open a pull request by visiting the following URL:
+
+    <https://github.com/Pringley/edb/compare/master...NEWBRANCH>
+
+    The group will review the pull request before merging it into `master`.
+
+### External contributors
+
+If you don't have push permissions on this repo, you can still help out by
+[forking](https://github.com/Pringley/edb/fork). This creates a copy of the
+repository under your GitHub username.
+
+1.  Instead of cloning the main repository, run:
+
+        git clone https://github.com/YOURUSERNAME/edb
+        git remote add upstream https://github.com/Pringley/edb.git
+
+2.  Now you can create new branches using these commands:
+
+        git fetch upstream
+        git checkout -b NEWBRANCH upstream/master
+
+3.  Once your changes are committed, push to your forked repo using:
+
+        git push origin NEWBRANCH
+
+    Pull requests can be opened from your repository by visiting:
+
+    <https://github.com/YOURUSERNAME/edb/compare/Pringley:master...NEWBRANCH>
