@@ -118,7 +118,7 @@ def check_cmd(*args):
     devnull = open(os.path.devnull, 'wb')
     try:
         subprocess.check_call(args, stdout=devnull, stderr=devnull)
-    except subprocess.CalledProcessError:
+    except:
         return False
     finally:
         devnull.close()
