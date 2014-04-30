@@ -19,5 +19,5 @@ class EncryptedModel(models.Model):
 
 class _Ping(EncryptedModel):
     """Concrete model for test cases."""
-    source = models.BinaryField()
-    destination = models.BinaryField()
+    source = models.CharField(max_length=700)
+    destination = models.CharField(max_length=700)

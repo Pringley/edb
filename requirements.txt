@@ -1,2 +1,4 @@
 Django==1.6.4
+djangorestframework==2.3.13
 pycrypto==2.6.1
+requests==2.2.1
