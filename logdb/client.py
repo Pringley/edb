@@ -7,7 +7,7 @@ class Client(EDBClient):
     def __init__(self, passphrase, host=None, port=None):
         super(self.__class__, self).__init__(passphrase)
         self.host = host or 'localhost'
-        self.port = port or 5000
+        self.port = port or 8000
         self.url = 'http://{}:{}/'.format(self.host, self.port)
         self.packet_url = self.url + 'packets/'
 
