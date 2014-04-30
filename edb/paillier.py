@@ -54,8 +54,20 @@ def generate_keys(bits = 512):
 	public = [n, g]
 	return private, public
 
+def exp(base, exponent, modulus):
+    if exponent == 0:
+        return 1
+    elif exponent == 1:
+        return base
+    elif exponent%2 == 0:
+        return exp((base*base)%modulus, exponent/2, modulus)
+    else:
+        return base*exp((base*base)%modulus, (exponent-1)/2, modulus)%modulus
+
 def average(ciphertext, n):
-	tally = 1
-	for i in range (0, len(ciphertext)):
-		tally = tally*ciphertext[i]%(n*n)
-	return tally, len(ciphertext)
+    tally = 1
+    for i in range (0, len(ciphertext)):
+        tally = tally*ciphertext[i]%(n*n)
+    k = random.randint(1, int(math.sqrt(n)-1))
+    tally = exp(tally, k, n*n)
+    return tally, len(ciphertext)*k

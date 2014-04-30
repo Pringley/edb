@@ -116,13 +116,13 @@ class TestCrypto(TestCase):
         self.assertEqual(final_ptxt, ptxt1 + ptxt2)
 
         # test average
-        ciphertext = [ctxt1, ctxt2]
+        ptxt3 = 12
+        ctxt3 = paillier.encrypt(n, g, ptxt3)
+        ciphertext = [ctxt1, ctxt2, ctxt3]
         numerator, denominator = paillier.average(ciphertext, n)
         numerator = paillier.decrypt(lmbda, mu, n, numerator)
-        self.assertEqual(ptxt1 + ptxt2, numerator)
-        self.assertEqual(denominator, 2)
         average = numerator/denominator
-        self.assertEqual(average, 16.5)
+        self.assertEqual(average, 15)
 
 if __name__ == '__main__':
     main()
