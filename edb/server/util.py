@@ -18,11 +18,12 @@ def match(b64field, b64query):
     # Ensure byte strings.
     if isinstance(b64field, str):
         b64field = str.encode(b64field)
-    elif not isinstance(b64field, bytes):
+    elif not isinstance(b64field, (bytes, bytearray)):
         return False
     if isinstance(b64query, str):
         b64query = str.encode(b64query)
-    elif not isinstance(b64query, bytes):
+    elif not isinstance(b64query, (bytes, bytearray)):
+        print('bad instance', type(b64query), b64query)
         return False
 
     # Decode from base64.

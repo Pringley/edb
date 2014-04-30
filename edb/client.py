@@ -40,16 +40,48 @@ class Client:
         self.passphrase = passphrase
 
         self.keys = crypto.generate_keys(passphrase, self.KEY_NAMES)
-        self.connected = False
+
+    def encrypt_query(self, params):
+        return {
+            field: self.query(value)
+            for field, value in params.items()
+        }
+
+    def encrypt_model(self, model, exclude_fields=None):
+        if exclude_fields is None:
+            exclude_fields = []
+        result = {}
+        for field, value in model.items():
+            if field in exclude_fields:
+                result[field] = value
+            else:
+                result[field] = self.encrypt(value)
+        return result
+
+    def decrypt_model(self, model, exclude_fields=None):
+        if exclude_fields is None:
+            exclude_fields = []
+        result = {}
+        for field, value in model.items():
+            if field in exclude_fields:
+                result[field] = value
+            else:
+                result[field] = self.decrypt(value)
+        return result
 
     def encrypt(self, word):
         """Encrypt a word."""
         salt = crypto.get_random_bytes(BLOCK_BYTES)
         preword = self.preprocess(word)
-        return base64.encodebytes(salt + self.stream_encrypt(salt, preword))
+        concat = salt + self.stream_encrypt(salt, preword)
+        return base64.encodebytes(concat).decode()
 
     def decrypt(self, b64ctxt):
         """Decrypt ciphertext from a given index."""
+        if isinstance(b64ctxt, str):
+            b64ctxt = str.encode(b64ctxt)
+        elif not isinstance(b64ctxt, (bytes, bytearray)):
+            raise EDBError("can only decrypt str or bytes")
         try:
             salted_ctxt = base64.decodebytes(b64ctxt)
         except:
@@ -65,7 +97,7 @@ class Client:
         preword = self.preprocess(word)
         left_part = self.left_part(preword)
         word_key = self.word_key(left_part)
-        return base64.encodebytes(preword + word_key)
+        return base64.encodebytes(preword + word_key).decode()
 
     def stream_encrypt(self, salt, preword):
         """Encrypt a (preprocessed) word with given salt."""
