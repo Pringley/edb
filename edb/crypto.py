@@ -1,10 +1,12 @@
 from Crypto import Random
+from Crypto.Random import random
 from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
 from Crypto.Protocol import KDF
 from Crypto.Util import Counter
 
 from edb.constants import BLOCK_BYTES
+from edb import paillier
 
 def generate_keys(passphrase, names):
     """Return a dict of keys derived from the given passphrase.
@@ -26,6 +28,22 @@ def generate_keys(passphrase, names):
         for index, name in enumerate(names)
     }
     return keys
+
+def generate_key_file(filename):
+    private, public = paillier.generate_keys()
+    n = public[0]
+    g = public[1]
+    lmbda = private[0]
+    mu = private[1]
+    f = open(filename, 'a')
+    f.write("lambda: " + str(lmbda) + "\n")
+    f.write("mu: " + str(mu) + "\n")
+    example_key1 = random.getrandbits(512)
+    example_key2 = random.getrandbits(512)
+    example_key3 = random.getrandbits(512)
+    f.write("key 1: " + str(example_key1) + "\n")
+    f.write("key 2: " + str(example_key2) + "\n")
+    f.write("key 3: " + str(example_key3) + "\n")
 
 def prgenerator(key, index, length=None, message=None):
     """Pseudorandom generator.
