@@ -55,47 +55,51 @@ class TestCrypto(TestCase):
         mu = 53022
         n = p*q
         lmb = 31536 # lcm(p-1, q-1)
+        key = paillier.Key(n, g, lmb, mu)
+        public = key.public()
 
-        # test encrypt(decrypt(x)) == x
+        # test private key encrypt(decrypt(x)) == x
         ptxt_original = 521
-        ctxt = paillier.encrypt(n, g, ptxt_original)
-        ptxt = paillier.decrypt(lmb, mu, n, ctxt)
+        ctxt = paillier.encrypt(key, ptxt_original)
+        ptxt = paillier.decrypt(key, ctxt)
+        self.assertEqual(ptxt_original, ptxt)
+
+        # test public key encrypt(decrypt(x)) == x
+        ctxt = paillier.encrypt(public, ptxt_original)
+        ptxt = paillier.decrypt(key, ctxt)
         self.assertEqual(ptxt_original, ptxt)
 
         # test homomorphism
         ptxt1 = 14
         ptxt2 = 19
-        ctxt1 = paillier.encrypt(n, g, ptxt1)
-        ctxt2 = paillier.encrypt(n, g, ptxt2)
-        final_ptxt = paillier.decrypt(lmb, mu, n, ctxt1 * ctxt2)
+        ctxt1 = paillier.encrypt(public, ptxt1)
+        ctxt2 = paillier.encrypt(public, ptxt2)
+        final_ptxt = paillier.decrypt(key, ctxt1 * ctxt2)
         self.assertEqual(final_ptxt, ptxt1 + ptxt2)
 
     def test_paillier_key_generation(self):
-        private, public = paillier.generate_keys(bits = 128)
-        n = public[0]
-        g = public[1]
-        lmbda = private[0]
-        mu = private[1]
+        key = paillier.generate_keys(bits = 128)
+        public = key.public()
 
         ptxt_original = 521
-        ctxt = paillier.encrypt(n, g, ptxt_original)
-        ptxt = paillier.decrypt(lmbda, mu, n, ctxt)
+        ctxt = paillier.encrypt(public, ptxt_original)
+        ptxt = paillier.decrypt(key, ctxt)
         self.assertEqual(ptxt_original, ptxt)
 
         # test homomorphism
         ptxt1 = 14
         ptxt2 = 19
-        ctxt1 = paillier.encrypt(n, g, ptxt1)
-        ctxt2 = paillier.encrypt(n, g, ptxt2)
-        final_ptxt = paillier.decrypt(lmbda, mu, n, ctxt1 * ctxt2)
+        ctxt1 = paillier.encrypt(public, ptxt1)
+        ctxt2 = paillier.encrypt(public, ptxt2)
+        final_ptxt = paillier.decrypt(key, ctxt1 * ctxt2)
         self.assertEqual(final_ptxt, ptxt1 + ptxt2)
 
         # test average
         ptxt3 = 12
-        ctxt3 = paillier.encrypt(n, g, ptxt3)
+        ctxt3 = paillier.encrypt(public, ptxt3)
         ciphertext = [ctxt1, ctxt2, ctxt3]
-        numerator, denominator = paillier.average(ciphertext, n)
-        numerator = paillier.decrypt(lmbda, mu, n, numerator)
+        numerator, denominator = paillier.average(public, ciphertext)
+        numerator = paillier.decrypt(key, numerator)
         average = numerator/denominator
         self.assertAlmostEqual(average, 15)
 

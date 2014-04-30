@@ -1,16 +1,18 @@
 import math
+import collections
+
 from Crypto.Util.number import getPrime
 from Crypto.Random import random
 
-def encrypt(modulus, generator, plaintext):
-    noise = random.randint(0, modulus - 1)
-    modsquare = modulus * modulus
-    return (pow(generator, plaintext, modsquare) *
-            pow(noise, modulus, modsquare)) % modsquare
+def encrypt(key, plaintext):
+    noise = random.randint(0, key.modulus - 1)
+    modsquare = key.modulus * key.modulus
+    return (pow(key.generator, plaintext, modsquare) *
+            pow(noise, key.modulus, modsquare)) % modsquare
 
-def decrypt(lmbda, mu, modulus, ciphertext):
-    return (((pow(ciphertext, lmbda, modulus*modulus) - 1)
-             // modulus) * mu) % modulus
+def decrypt(key, ciphertext):
+    return (((pow(ciphertext, key.lambda_, key.modulus*key.modulus) - 1)
+             // key.modulus) * key.mu) % key.modulus
 
 # Simple LCM
 def lcm(x, y):
@@ -43,16 +45,18 @@ def modinv(a, m):
     else:
         return x % m
 
-def generate_keys(bits = 512):
-	p = getPrime(bits)
-	q = getPrime(bits)
+PublicKey = collections.namedtuple('PublicKey', ('modulus', 'generator'))
+Key = collections.namedtuple('_Key', ('modulus', 'generator', 'lambda_', 'mu'))
+Key.public = lambda self: PublicKey(self.modulus, self.generator)
+
+def generate_keys(bits=512):
+	p = getPrime(bits//2)
+	q = getPrime(bits//2)
 	n = p*q
 	lmbda = (p-1)*(q-1)
 	g = n+1
 	mu = modinv(((p-1)*(q-1)), n)
-	private = [lmbda, mu]
-	public = [n, g]
-	return private, public
+	return Key(n, g, lmbda, mu)
 
 def exp(base, exponent, modulus):
     if exponent == 0:
@@ -64,7 +68,8 @@ def exp(base, exponent, modulus):
     else:
         return base*exp((base*base)%modulus, (exponent-1)/2, modulus)%modulus
 
-def average(ciphertext, n):
+def average(key, ciphertext):
+    n = key.modulus
     tally = 1
     for i in range (0, len(ciphertext)):
         tally = tally*ciphertext[i]%(n*n)
