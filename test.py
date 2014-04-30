@@ -95,5 +95,34 @@ class TestCrypto(TestCase):
         final_ptxt = paillier.decrypt(lmb, mu, n, ctxt1 * ctxt2)
         self.assertEqual(final_ptxt, ptxt1 + ptxt2)
 
+    def test_paillier_key_generation(self):
+        private, public = paillier.generate_keys(bits = 128)
+        n = public[0]
+        g = public[1]
+        lmbda = private[0]
+        mu = private[1]
+
+        ptxt_original = 521
+        ctxt = paillier.encrypt(n, g, ptxt_original)
+        ptxt = paillier.decrypt(lmbda, mu, n, ctxt)
+        self.assertEqual(ptxt_original, ptxt)
+
+        # test homomorphism
+        ptxt1 = 14
+        ptxt2 = 19
+        ctxt1 = paillier.encrypt(n, g, ptxt1)
+        ctxt2 = paillier.encrypt(n, g, ptxt2)
+        final_ptxt = paillier.decrypt(lmbda, mu, n, ctxt1 * ctxt2)
+        self.assertEqual(final_ptxt, ptxt1 + ptxt2)
+
+        # test average
+        ciphertext = [ctxt1, ctxt2]
+        numerator, denominator = paillier.average(ciphertext, n)
+        numerator = paillier.decrypt(lmbda, mu, n, numerator)
+        self.assertEqual(ptxt1 + ptxt2, numerator)
+        self.assertEqual(denominator, 2)
+        average = numerator/denominator
+        self.assertEqual(average, 16.5)
+
 if __name__ == '__main__':
     main()
