@@ -42,6 +42,16 @@ def main():
         print('Error installing requirements! Bootstrap failed.')
         sys.exit(1)
 
+    venv_python = os.path.join(env_dir, 'bin', 'python')
+    def venv_python_run(*args):
+        """Run a Python command within our new venv."""
+        return shell_run(venv_python, *args)
+
+    os.chdir(project_dir)
+    if not venv_python_run('manage.py', 'syncdb', '--noinput'):
+        print('Error setting up the local server database.')
+        sys.exit(1)
+
     print('Bootstrap successful.')
 
 def make_venv_legacy(env_dir):

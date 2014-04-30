@@ -8,7 +8,14 @@ S&P 2000.  Proceedings. 2000 IEEE Symposium on, pp. 44-55. IEEE, 2000.
 
 ## Requirements
 
--   Python 3.4 with development headers (e.g. `Python.h`)
+-   SQLite3 with development headers.
+
+    Usually comes bundled with Python, except sometimes on Ubuntu. In that
+    case, run:
+
+        sudo apt-get update && sudo apt-get install libsqlite3-dev
+
+-   Python 3.4 with development headers.
 
     The source is available [at the Python
     website](https://www.python.org/ftp/python/3.4.0/Python-3.4.0.tgz)
