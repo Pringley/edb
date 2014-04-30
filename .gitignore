@@ -1,14 +1,82 @@
-__pycache__
-*.pyc
-.*.swp
-*~
-Session.vim
-.DS_Store
-bin
-include
-lib
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+venv/
+venv2.*/
+venv3.*/
+env/
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
 pyvenv.cfg
+Python-*.*/
+Python-*.*.tgz
+virtualenv-*.*/
+virtualenv-*.*.tar.gz
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# Rope
+.ropeproject
+
+# Django stuff:
+*.log
+*.pot
+
+# Test sqlite dbs
+db.sqlite3
+test.db
+tmp.db
+
+# Sphinx documentation
+docs/_build/
+
+# VIM files
+*~
+.*.swp
+.*.swo
+.*.un~
+Session.vim
+
+# OS X files
+.DS_Store
+
+# Heroku
+.env
+
+# Vagrant
 .vagrant
-Python-*
-virtualenv-*
-venv
