@@ -122,7 +122,7 @@ class TestCrypto(TestCase):
         numerator, denominator = paillier.average(ciphertext, n)
         numerator = paillier.decrypt(lmbda, mu, n, numerator)
         average = numerator/denominator
-        self.assertEqual(average, 15)
+        self.assertAlmostEqual(average, 15)
 
 if __name__ == '__main__':
     main()
