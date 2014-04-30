@@ -1,7 +1,9 @@
 """EDB client."""
+import base64
 
 from edb import crypto
 from edb.constants import BLOCK_BYTES, MATCH_BYTES, LEFT_BYTES
+from edb.errors import EDBError
 
 class Client:
     """Client to access an EDB.
@@ -40,44 +42,52 @@ class Client:
         self.keys = crypto.generate_keys(passphrase, self.KEY_NAMES)
         self.connected = False
 
-    def encrypt_word(self, index, word):
-        """Encrypt a word (to put in the given index)."""
+    def encrypt(self, word):
+        """Encrypt a word."""
+        salt = crypto.get_random_bytes(BLOCK_BYTES)
         preword = self.preprocess(word)
-        return self.stream_encrypt(index, preword)
+        return base64.encodebytes(salt + self.stream_encrypt(salt, preword))
 
-    def decrypt_word(self, index, ciphertext):
+    def decrypt(self, b64ctxt):
         """Decrypt ciphertext from a given index."""
-        preword = self.stream_decrypt(index, ciphertext)
+        try:
+            salted_ctxt = base64.decodebytes(b64ctxt)
+        except:
+            raise EDBError("invalid base64")
+        if len(salted_ctxt) != 2 * BLOCK_BYTES:
+            raise EDBError("invalid ciphertext -- incorrect length")
+        salt, ciphertext = salted_ctxt[:BLOCK_BYTES], salted_ctxt[BLOCK_BYTES:]
+        preword = self.stream_decrypt(salt, ciphertext)
         return self.postprocess(preword)
 
-    def search_parameters(self, word):
+    def query(self, word):
         """Return the search parameters (preword, word_key) for word."""
         preword = self.preprocess(word)
         left_part = self.left_part(preword)
         word_key = self.word_key(left_part)
-        return preword, word_key
+        return base64.encodebytes(preword + word_key)
 
-    def stream_encrypt(self, index, preword):
-        """Encrypt a (preprocessed) word at index."""
+    def stream_encrypt(self, salt, preword):
+        """Encrypt a (preprocessed) word with given salt."""
         left_part = self.left_part(preword)
         word_key = self.word_key(left_part)
-        stream_prefix = self.stream_prefix(index)
+        stream_prefix = self.stream_prefix(salt)
         stream_suffix = self.stream_suffix(word_key, stream_prefix)
         return crypto.xor(preword, stream_prefix + stream_suffix)
 
-    def stream_decrypt(self, index, ciphertext):
-        """Decrypt ciphertext at index, return (preprocessed) word."""
+    def stream_decrypt(self, salt, ciphertext):
+        """Decrypt ciphertext with given salt, return (preprocessed) word."""
         left_ciphertext = self.left_part(ciphertext)
-        stream_prefix = self.stream_prefix(index)
+        stream_prefix = self.stream_prefix(salt)
         left_part = crypto.xor(left_ciphertext, stream_prefix)
         word_key = self.word_key(left_part)
         stream_suffix = self.stream_suffix(word_key, stream_prefix)
         return crypto.xor(ciphertext, stream_prefix + stream_suffix)
 
-    def stream_prefix(self, index):
-        """Return the stream prefix for the word at index."""
-        return crypto.prgenerator(self.keys['seed'],
-                                index,
+    def stream_prefix(self, salt):
+        """Return the stream prefix for the given salt."""
+        return crypto.prfunction(self.keys['seed'],
+                                salt,
                                 length=(LEFT_BYTES))
 
     def block_encrypt(self, plaintext):

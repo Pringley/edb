@@ -107,6 +107,9 @@ def decrypt(key, ciphertext):
     cipher = AES.new(key, AES.MODE_CBC, b"\0"*AES.block_size)
     return cipher.decrypt(ciphertext)
 
+def get_random_bytes(amount):
+    return Random.get_random_bytes(amount)
+
 def pad(message):
     """Pad message to exactly 256 bits using PKCS#7 variant."""
     if len(message) >= BLOCK_BYTES:

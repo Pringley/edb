@@ -42,9 +42,13 @@ the required packages installed within.
 
 ## Test
 
-Use the built-in Python unittest module to run the tests.
+Client tests are located in `test.py`.
 
-    venv/bin/python -m unittest test
+Server tests are located in `edb/server/test.py`.
+
+To run all tests, execute the following command:
+
+    venv/bin/python manage.py test
 
 ## Contributing workflow
 

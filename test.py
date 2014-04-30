@@ -2,34 +2,10 @@
 
 from unittest import TestCase, main
 
-from edb import crypto, paillier, constants, Client, Server
+from edb import crypto, paillier, constants
+from edb.client import Client
 
 PASSPHRASE = b'hunter2 is not a good password'
-
-class TestServer(TestCase):
-
-    def setUp(self):
-        self.client = Client(PASSPHRASE)
-        self.server = Server()
-
-        # populate server with encrypted words
-        words = [b'apple', b'banana', b'strawberry']
-        for index, word in enumerate(words):
-            ciphertext = self.client.encrypt_word(index, word)
-            self.server.add_word(ciphertext)
-
-    def test_search(self):
-        # client computes encrypted word and its search key
-        search_word = b'banana'
-        preword, word_key = self.client.search_parameters(search_word)
-
-        # server replies with matching ciphertexts
-        results = self.server.search(preword, word_key)
-
-        # client decrypts results
-        plaintexts = [self.client.decrypt_word(index, ciphertext)
-                      for index, ciphertext in results]
-        self.assertIn(search_word, plaintexts)
 
 class TestClient(TestCase):
 
@@ -37,10 +13,9 @@ class TestClient(TestCase):
         self.client = Client(PASSPHRASE)
     
     def test_encrypt(self):
-        index = 3
-        word = b"test"
-        ciphertext = self.client.encrypt_word(index, word)
-        self.assertEqual(self.client.decrypt_word(index, ciphertext), word)
+        ptxt = b"test"
+        ctxt = self.client.encrypt(ptxt)
+        self.assertEqual(ptxt, self.client.decrypt(ctxt))
 
 class TestCrypto(TestCase):
 
