@@ -26,8 +26,8 @@ class Client(EDBClient):
 
     def count(self, **query):
         params = self.encrypt_query(query)
-        resp = requests.get(self.count, params=params).json()
-        return int(count)
+        resp = requests.get(self.count_url, params=params).json()
+        return int(resp['count'])
 
     def average(self, **query):
         params = self.encrypt_query(query)
