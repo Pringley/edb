@@ -12,6 +12,7 @@ class Client(EDBClient):
         self.packet_url = self.url + 'packets/'
         self.count_url = self.url + 'compute/count/'
         self.average_url = self.url + 'compute/average/'
+        self.correlate_url = self.url + 'compute/correlate/'
 
     def search(self, **query):
         encrypted_query = self.encrypt_query(query)
@@ -23,6 +24,11 @@ class Client(EDBClient):
     def create(self, **model):
         encrypted_model = self.encrypt_model(model, paillier_fields=['length'])
         requests.post(self.packet_url, data=encrypted_model)
+
+    def correlate(self, source, destination):
+        params = self.encrypt_query({'source': source, 'destination': destination})
+        resp = requests.get(self.correlate_url, params=params).json()
+        return float(resp['coefficient'])
 
     def count(self, **query):
         params = self.encrypt_query(query)

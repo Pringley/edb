@@ -9,6 +9,10 @@ from edb.server.mixins import EncryptedSearchMixin
 from logdb.serializers import PacketSerializer
 from logdb.models import Packet
 
+class InvalidParams(APIException):
+    status_code = 403
+    default_detail = "invalid parameters"
+
 class PubKeyRequired(APIException):
     status_code = 403
     default_detail = "must provide public key for homomorphic operations"
@@ -38,6 +42,18 @@ def average(request):
     ctxt_sum, ctxt_count = paillier.average(key, lengths)
 
     return Response({'sum': ctxt_sum, 'count': ctxt_count})
+
+@api_view(['GET'])
+def correlate(request):
+    params = request.QUERY_PARAMS.dict()
+    if set(params.keys()) != {'source', 'destination'}:
+        raise InvalidParams("requires source and desination params")
+    src = params['source']
+    dst = params['destination']
+    srccount = len(Packet.objects.encrypted_filter(source=src))
+    bothcount = len(Packet.objects.encrypted_filter(**params))
+    coef = bothcount / srccount
+    return Response({'coefficient': coef})
 
 @api_view(['GET'])
 def count(request):

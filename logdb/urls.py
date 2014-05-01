@@ -10,4 +10,5 @@ urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^compute/average', views.average),
     url(r'^compute/count', views.count),
+    url(r'^compute/correlate', views.correlate),
 ]
