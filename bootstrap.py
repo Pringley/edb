@@ -38,7 +38,7 @@ def main():
     # Download requirements with pip.
     pip = os.path.join(env_dir, 'bin', 'pip')
     requirements = os.path.join(project_dir, 'requirements.txt')
-    if not shell_run(pip, 'install', '-I', '-r', requirements):
+    if not shell_run(pip, 'install', '-r', requirements):
         print('Error installing requirements! Bootstrap failed.')
         sys.exit(1)
 
@@ -46,6 +46,10 @@ def main():
     def venv_python_run(*args):
         """Run a Python command within our new venv."""
         return shell_run(venv_python, *args)
+
+    if not venv_python_run('setup.py', 'develop'):
+        print('Error setting up the local package.')
+        sys.exit(1)
 
     os.chdir(project_dir)
     if not venv_python_run('manage.py', 'syncdb', '--noinput'):
