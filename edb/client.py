@@ -2,13 +2,13 @@
 import base64
 
 from edb import crypto
-from edb.constants import BLOCK_BYTES, MATCH_BYTES, LEFT_BYTES
+from edb.constants import BLOCK_BYTES, MATCH_BYTES, LEFT_BYTES, PAILLIER_BITS
 from edb.errors import EDBError
 
 class Client:
     """Client to access an EDB.
 
-    The keys dict will contain byte strings:
+    The keys dict will contain:
 
     seed
       the 256-bit random seed used to initialize the random number
@@ -21,25 +21,35 @@ class Client:
       the 256-bit key used to pre-encrypt words before entry into the
       database
 
-    index
-      the 256-bit key used to generate index keys
+    paillier
+      tuple containing the 512-bit Paillier key used for homomorphic encryption
 
     """
 
-    KEY_NAMES = ('seed', 'hash', 'encrypt', 'index')
+    KEY_SCHEMA = {
+        'seed': {'type': 'block', 'bits': BLOCK_BYTES * 8},
+        'hash': {'type': 'block', 'bits': BLOCK_BYTES * 8},
+        'encrypt': {'type': 'block', 'bits': BLOCK_BYTES * 8},
+        'paillier': {'type': 'paillier', 'bits': PAILLIER_BITS},
+    }
 
-    def __init__(self, passphrase):
+    def __init__(self, keyfile=None, _keyinfo=None):
         """Create a client.
 
         Parameters:
 
-        passphrase
-          byte string client passphrase used to generate keys
+        keyfile (optional)
+          path to file containing client keys
+
+        If keyfile is not supplied, fresh keys will be generated.
 
         """
-        self.passphrase = passphrase
-
-        self.keys = crypto.generate_keys(passphrase, self.KEY_NAMES)
+        if _keyinfo is not None:
+            self.keys = _keyinfo
+        elif keyfile is not None:
+            self.keys = crypto.read_keyinfo(keyfile)
+        else:
+            self.keys = crypto.generate_keyinfo(self.KEY_SCHEMA)
 
     def encrypt_query(self, params):
         return {

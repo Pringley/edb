@@ -6,7 +6,7 @@ from edb.server.models import _Ping
 class EncryptedModelTestCase(TestCase):
 
     def setUp(self):
-        self.client = Client(b"hunter2 is not a good passphrase")
+        self.client = Client()
         self.ip1_ptxt = b'127.0.0.1'
         self.ip2_ptxt = b'128.66.0.0'
         self.ip3_ptxt = b'192.0.2.0'

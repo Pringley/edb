@@ -30,10 +30,10 @@ def Populate(client):
 
 def main():
 	if len(sys.argv) != 2:
-		print("Usage: populate.py passphrase")
+		print("Usage: populate.py keyfile")
 		sys.exit()
-	passphrase = sys.argv[1]
-	c = Client(passphrase)
+	keyfile = sys.argv[1]
+	c = Client(keyfile)
 	Populate(c)
 
 main()

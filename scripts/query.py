@@ -5,7 +5,7 @@ from logdb.client import Client
 
 def main():
 	if (len(sys.argv) < 3):
-		print("Usage: query.py source_IP, dest_IP, protocol, length, passphrase")
+		print("Usage: query.py source_IP, dest_IP, protocol, length, keyfile")
 		print("If you wish to ommit a field enter null")
 		sys.exit()
 	query = {}
@@ -18,10 +18,10 @@ def main():
 	if (sys.argv[4] != 'null'):
 		query['length'] = sys.argv[4]
 	if (sys.argv[5] == 'null'):
-		print("You must enter a passphrase!")
+		print("You must enter a keyfile!")
 		sys.exit()
-	passphrase = sys.argv[5]
-	c = Client(passphrase)
+	keyfile = sys.argv[5]
+	c = Client(keyfile)
 	print("Database entries for query: " + str(query))
 	pprint.pprint(c.search(**query))
 
