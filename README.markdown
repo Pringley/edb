@@ -47,7 +47,19 @@ Run the server using:
 This starts the server running at <http://localhost:8000>. You can visit it in
 a web browser to debug!
 
-Make a client request using the `client` script.
+Set up the client by generating keys.
+
+    client keygen
+
+Then add some test data to the server.
+
+    client addfrom EDB_Test_Data.txt
+
+You can use your own data instead, provided that it follows the format
+specified in `client addfrom --help`.
+
+The `client` script is well documented. Use `--help` to learn about its
+available subcommands.
 
 > **Usage:** `client [OPTIONS] COMMAND [ARGS]...`
 >
