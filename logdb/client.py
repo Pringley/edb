@@ -30,11 +30,12 @@ def cli(context, host, port, keyfile):
         client SUBCOMMAND --help
     
     """
-    if keyfile == 'keyfile.json' and not os.path.exists(keyfile):
-        print('The client requires a keyfile to proceed.')
-        print('Generate using the `keygen` command.')
-        context.exit()
-    context.obj['client'] = Client(keyfile=keyfile, host=host, port=port)
+    if context.invoked_subcommand not in ('keygen'):
+        if keyfile == 'keyfile.json' and not os.path.exists(keyfile):
+            print('The client requires a keyfile to proceed.')
+            print('Generate using the `keygen` command.')
+            context.exit()
+        context.obj['client'] = Client(keyfile=keyfile, host=host, port=port)
 
 @cli.command()
 @click.argument('filename', default='keyfile.json',
