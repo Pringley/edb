@@ -142,6 +142,7 @@ class TestCrypto(TestCase):
         ciphertext = [ctxt1, ctxt2, ctxt3]
         numerator, denominator = paillier.average(public, ciphertext)
         numerator = paillier.decrypt(key, numerator)
+        denominator = paillier.decrypt(key, denominator)
         average = numerator/denominator
         self.assertAlmostEqual(average, 15)
 

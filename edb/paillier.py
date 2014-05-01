@@ -68,11 +68,11 @@ def exp(base, exponent, modulus):
     else:
         return base*exp((base*base)%modulus, (exponent-1)/2, modulus)%modulus
 
-def average(key, ciphertext):
-    n = key.modulus
+def average(key, ctxts):
+    nsquared = key.modulus * key.modulus
     tally = 1
-    for i in range (0, len(ciphertext)):
-        tally = tally*ciphertext[i]%(n*n)
-    k = random.randint(1, int(math.sqrt(n)-1))
-    tally = exp(tally, k, n*n)
-    return tally, len(ciphertext)*k
+    for ctxt in ctxts:
+        # multiplication mod n^2 is homomorphic addition
+        tally = (tally*ctxt) % nsquared
+    # client can decrypt and perform division upon receipt
+    return tally, encrypt(key, len(ctxts))
