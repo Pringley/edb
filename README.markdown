@@ -161,8 +161,8 @@ cryptosystem](https://en.wikipedia.org/wiki/Paillier_cryptosystem).
 The project package is `logdb/`. It relies on a support library we wrote called
 `edb/`.
 
-Our implementation of Song's scheme is primarily in `edb/client.py`. Our
-encryption of Paillier is in `edb/paillier.py`.
+Our implementation of Song's scheme is primarily in
+[`edb/client.py`](edb/client.py). Our encryption of Paillier is in `edb/paillier.py`.
 
 The server uses [Django REST framework](http://www.django-rest-framework.org/)
 to parse JSON queries and generate responses. The main driver code is in
