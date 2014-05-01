@@ -1,3 +1,7 @@
+import base64
+import json
+import collections.abc
+
 from Crypto import Random
 from Crypto.Random import random
 from Crypto.Cipher import AES
@@ -6,6 +10,7 @@ from Crypto.Protocol import KDF
 from Crypto.Util import Counter
 
 from edb.constants import BLOCK_BYTES
+from edb.errors import EDBError
 from edb import paillier
 
 def generate_keys(passphrase, names):
@@ -29,21 +34,111 @@ def generate_keys(passphrase, names):
     }
     return keys
 
-def generate_key_file(filename):
-    private, public = paillier.generate_keys()
-    n = public[0]
-    g = public[1]
-    lmbda = private[0]
-    mu = private[1]
-    f = open(filename, 'a')
-    f.write("lambda: " + str(lmbda) + "\n")
-    f.write("mu: " + str(mu) + "\n")
-    example_key1 = random.getrandbits(512)
-    example_key2 = random.getrandbits(512)
-    example_key3 = random.getrandbits(512)
-    f.write("key 1: " + str(example_key1) + "\n")
-    f.write("key 2: " + str(example_key2) + "\n")
-    f.write("key 3: " + str(example_key3) + "\n")
+def generate_keyinfo(keyschema):
+    """Return a dict of secure randomly-generated keys.
+
+    The provided parameter `keyschema` should be a dict mapping key names to
+    descriptions. For example:
+
+        {
+            'encrypt': {'type': 'block', 'bits': 256},
+            'hmac': {'type': 'block', 'bits': 256},
+            'homomorphic': {'type': 'paillier', 'bits': 512}
+        }
+
+    Supported types include "block" (random string of bit size) and "paillier"
+    (key for the paillier cryptosystem). The default type is "block" if
+    unspecified. The default number of bits is 256.
+
+    Example return value:
+
+        {
+            'encrypt': b'\xb5c\x1d...',
+            'hmac': b'\x7f\xa7\xcd...',
+            'homomorphic': paillier.Key(modulus=..., ...)
+        }
+
+    """
+    keyinfo = {}
+    for name, attrs in keyschema.items():
+        bad_attrs = set(attrs.keys()) - set(['type', 'bits'])
+        if bad_attrs:
+            raise EDBError("invalid schema: unexpected attrs: "
+                           "{}".format(bad_attrs))
+        keytype = attrs.get('type', 'block')
+        try:
+            keybits = int(attrs.get('bits', 256))
+        except ValueError:
+            raise EDBError("invalid schema: {}/bits is not int".format(name))
+        if keytype == 'block':
+            key = get_random_bytes(keybits // 8)
+        elif keytype == 'paillier':
+            key = paillier.generate_keys(keybits)
+        else:
+            raise EDBError("invalid schema: bad type: ".format(keytype))
+        keyinfo[name] = key
+    return keyinfo
+
+def write_keyinfo(keyinfo, filename):
+    """Write keyinfo to file."""
+    psz_keyinfo = preserialize_keyinfo(keyinfo)
+    with open(filename, 'w') as wfile:
+        json.dump(psz_keyinfo, wfile)
+
+def read_keyinfo(filename):
+    """Load keyinfo from file."""
+    with open(filename) as rfile:
+        psz_keyinfo = json.load(rfile)
+    return postdeserialize_keyinfo(psz_keyinfo)
+
+def preserialize_keyinfo(keyinfo):
+    """Prepare keyinfo for JSON serialization."""
+    psz_keyinfo = {}
+    for name, keydata in keyinfo.items():
+        if isinstance(keydata, str):
+            sz_data = base64.encodebytes(str.encode(keydata)).decode()
+        elif isinstance(keydata, (bytes, bytearray)):
+            sz_data = base64.encodebytes(keydata).decode()
+        elif isinstance(keydata, paillier.Key):
+            sz_data = {'paillier': list(keydata)}
+        elif isinstance(keydata, paillier.PublicKey):
+            sz_data = {'paillier.pub': list(keydata)}
+        else:
+            raise EDBError("unexpected keydata")
+        psz_keyinfo[name] = sz_data
+    return psz_keyinfo
+
+def postdeserialize_keyinfo(psz_keyinfo):
+    """Undo the preprocessing done by preserialize_keyinfo."""
+    keyinfo = {}
+    for name, sz_data in psz_keyinfo.items():
+        if isinstance(sz_data, str):
+            sz_bytes = str.encode(sz_data)
+            try:
+                keydata = base64.decodebytes(sz_bytes)
+            except:
+                raise EDBError("serialized keydata not b64")
+        elif isinstance(sz_data, (bytes, bytearray)):
+            try:
+                keydata = base64.decodebytes(sz_data)
+            except:
+                raise EDBError("serialized keydata not b64")
+        elif isinstance(sz_data, dict) and 'paillier' in sz_data:
+            sz_tuple = sz_data['paillier']
+            if not (isinstance(sz_tuple, collections.abc.Iterable)
+                    and len(sz_tuple) == 4):
+                raise EDBError("invalid paillier keydata")
+            keydata = paillier.Key._make(sz_tuple)
+        elif isinstance(sz_data, dict) and 'paillier.pub' in sz_data:
+            sz_tuple = sz_data['paillier.pub']
+            if not (isinstance(sz_tuple, collections.abc.Iterable)
+                    and len(sz_tuple) == 2):
+                raise EDBError("invalid paillier keydata")
+            keydata = paillier.PublicKey._make(sz_tuple)
+        else:
+            raise EDBError("invalid keydata")
+        keyinfo[name] = keydata
+    return keyinfo
 
 def prgenerator(key, index, length=None, message=None):
     """Pseudorandom generator.

@@ -1,7 +1,10 @@
 """Run tests on EDB."""
 
-from unittest import TestCase, main
+import shutil
+import os.path
+import tempfile
 
+from unittest import TestCase, main
 from edb import crypto, paillier, constants
 from edb.client import Client
 
@@ -20,6 +23,14 @@ class TestClient(TestCase):
 class TestCrypto(TestCase):
 
     def setUp(self):
+        self.keyschema = {
+            'encrypt': {'type': 'block', 'bits': 256},
+            'hmac': {'type': 'block', 'bits': 256},
+            'homomorphic': {'type': 'paillier', 'bits': 512},
+        }
+        self.keyinfo = crypto.generate_keyinfo(self.keyschema)
+
+        # legacy
         self.names = ('foo', 'bar', 'baz')
         self.keys = crypto.generate_keys(PASSPHRASE, self.names)
 
@@ -28,6 +39,22 @@ class TestCrypto(TestCase):
             key = self.keys[name]
             self.assertIsInstance(key, bytes)
             self.assertEqual(len(key), constants.BLOCK_BYTES)
+
+    def test_new_key_generation(self):
+        self.assertIsInstance(self.keyinfo['encrypt'], bytes)
+        self.assertIsInstance(self.keyinfo['hmac'], bytes)
+        self.assertIsInstance(self.keyinfo['homomorphic'], paillier.Key)
+        self.assertEqual(len(self.keyinfo['encrypt']), 256 // 8)
+        self.assertEqual(len(self.keyinfo['hmac']), 256 // 8)
+
+    def test_key_serialization(self):
+        tmpdir = tempfile.mkdtemp()
+        filename = os.path.join(tmpdir, '.keyinfo')
+        crypto.write_keyinfo(self.keyinfo, filename)
+        keyinfo2 = crypto.read_keyinfo(filename)
+        # self.assertEqual(self.keyinfo, keyinfo2)
+        for name, keydata in self.keyinfo.items():
+            self.assertEqual(keydata, keyinfo2[name])
 
     def test_block_encrypt(self):
         key = self.keys['foo']
