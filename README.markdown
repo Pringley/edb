@@ -162,9 +162,10 @@ The project package is `logdb/`. It relies on a support library we wrote called
 `edb/`.
 
 Our implementation of Song's scheme is primarily in
-[`edb/client.py`](edb/client.py). Our encryption of Paillier is in `edb/paillier.py`.
+[`edb/client.py`](edb/client.py). Our encryption of Paillier is in
+[`edb/paillier.py`](edb/paillier.py).
 
 The server uses [Django REST framework](http://www.django-rest-framework.org/)
 to parse JSON queries and generate responses. The main driver code is in
-`logdb/views.py`, with the notable addition of the crypto search backend in
-`edb/server/util.py`.
+[`logdb/views.py`](logdb/views.py), with the notable addition of the crypto
+search backend in [`edb/server/util.py`](edb/server/util.py).
