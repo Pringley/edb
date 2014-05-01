@@ -14,9 +14,10 @@ class Client(EDBClient):
     def search(self, **query):
         encrypted_query = self.encrypt_query(query)
         resp = requests.get(self.packet_url, params=encrypted_query)
-        return [self.decrypt_model(model, exclude_fields=['length', 'id'])
+        return [self.decrypt_model(model, paillier_fields=['length'],
+                exclude_fields=['id'])
                 for model in resp.json()]
 
     def create(self, **model):
-        encrypted_model = self.encrypt_model(model, exclude_fields=['length'])
+        encrypted_model = self.encrypt_model(model, paillier_fields=['length'])
         requests.post(self.packet_url, data=encrypted_model)

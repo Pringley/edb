@@ -1,7 +1,7 @@
 """EDB client."""
 import base64
 
-from edb import crypto
+from edb import crypto, paillier
 from edb.constants import BLOCK_BYTES, MATCH_BYTES, LEFT_BYTES, PAILLIER_BITS
 from edb.errors import EDBError
 
@@ -57,24 +57,24 @@ class Client:
             for field, value in params.items()
         }
 
-    def encrypt_model(self, model, exclude_fields=None):
-        if exclude_fields is None:
-            exclude_fields = []
+    def encrypt_model(self, model, exclude_fields=(), paillier_fields=()):
         result = {}
         for field, value in model.items():
             if field in exclude_fields:
                 result[field] = value
+            elif field in paillier_fields:
+                result[field] = self.paillier_encrypt(value)
             else:
                 result[field] = self.encrypt(value)
         return result
 
-    def decrypt_model(self, model, exclude_fields=None):
-        if exclude_fields is None:
-            exclude_fields = []
+    def decrypt_model(self, model, exclude_fields=(), paillier_fields=()):
         result = {}
         for field, value in model.items():
             if field in exclude_fields:
                 result[field] = value
+            elif field in paillier_fields:
+                result[field] = self.paillier_decrypt(value)
             else:
                 result[field] = self.decrypt(value)
         return result
@@ -108,6 +108,22 @@ class Client:
         left_part = self.left_part(preword)
         word_key = self.word_key(left_part)
         return base64.encodebytes(preword + word_key).decode()
+
+    def paillier_encrypt(self, ptxt):
+        """Encrypt a number using homomorphic methods."""
+        try:
+            ptxt = int(ptxt)
+        except ValueError:
+            raise EDBError("can only homomorphic encrypt integers")
+        return str(paillier.encrypt(self.keys['paillier'], ptxt))
+
+    def paillier_decrypt(self, ctxt):
+        """Decrypt a number using homomorphic methods."""
+        try:
+            ctxt = int(ctxt)
+        except ValueError:
+            raise EDBError("can only homomorphic decrypt integers")
+        return paillier.decrypt(self.keys['paillier'], ctxt)
 
     def stream_encrypt(self, salt, preword):
         """Encrypt a (preprocessed) word with given salt."""
