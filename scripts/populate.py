@@ -1,4 +1,5 @@
-from logdb import client
+from logdb.client import Client
+import sys
 
 def file_len(fname):
 	with open(fname) as f:
@@ -26,3 +27,13 @@ def Populate(client):
 	for i in range(0, len(data)):
 		print(data[i])
 		c.create(**dict(zip(parameters, data[i])))
+
+def main():
+	if len(sys.argv) != 2:
+		print("Usage: populate.py passphrase")
+		sys.exit()
+	passphrase = sys.argv[1]
+	c = Client(passphrase)
+	Populate(c)
+
+main()
