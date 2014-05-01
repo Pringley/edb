@@ -1,24 +1,11 @@
 Searchable encrypted database.
 
-Based on the final scheme described by Dawn Song et al.[^song]
-
-[^song]: Song, Dawn Xiaoding, David Wagner, and Adrian Perrig. "Practical
-techniques for searches on encrypted data." In *Security and Privacy*, 2000.
-S&P 2000.  Proceedings. 2000 IEEE Symposium on, pp. 44-55. IEEE, 2000.
-
 ## Requirements
 
--   SQLite3 with development headers.
-
-    Usually comes bundled with Python, except sometimes on Ubuntu. In that
-    case, run:
-
-        sudo apt-get update && sudo apt-get install libsqlite3-dev
-
--   Python 3.4 with development headers.
+-   Python 3.4 with development headers and SQLite3 support.
 
     The source is available [at the Python
-    website](https://www.python.org/ftp/python/3.4.0/Python-3.4.0.tgz)
+    website](https://www.python.org/ftp/python/3.4.0/Python-3.4.0.tgz).
 
     To install from source, download from the link above and run:
 
@@ -38,74 +25,97 @@ with this project.
     python3.4 bootstrap.py
 
 This will create a [virtual environment](http://virtualenv.org) in `venv/` with
-the required packages installed within.
+the required packages installed within. It should also configure the server's
+database.
+
+## Usage
+
+Start the virtual environment using:
+
+    source venv/bin/activate
+
+This should prepend `(venv)` to your prompt and activate the EDB commands.
+
+>   **Note:** this only activates the commands *in the current terminal
+>   session*. If you use multiple sessions (such as one for the client and one
+>   for the server), you ust run `source venv/bin/activate` in each.
+
+Run the server using:
+
+    server
+
+This starts the server running at <http://localhost:8000>. You can visit it in
+a web browser to debug!
+
+Make a client request using the `client` script.
+
+> **Usage:** `client [OPTIONS] COMMAND [ARGS]...`
+>
+> Client command line interface.
+>
+> To view help for a subcommand, run:
+>
+>     client SUBCOMMAND --help
+>
+> Commands:
+>
+> *   `add`        - Add a row to database.
+> *   `addfrom`    - Add rows from file.
+> *   `average`    - Compute average message length.
+> *   `correlate`  - Compute correlation between IPs.
+> *   `count`      - Count messages matching a query.
+> *   `keygen`     - Generate client keys.
+> *   `lookup`     - Look up packets in the database.
+>
+> Options:
+>
+> *   `--host=HOST`           - hostname of the server (default localhost)
+> *   `--port=PORT`           - port of the server
+> *   `--keyfile=KEYFILE`     - path to the keyfile (default "keyfile.json")
+> *   `--help`                - Show this message and exit.
 
 ## Test
 
-Client tests are located in `test.py`.
-
-Server tests are located in `edb/server/test.py`.
-
-To run all tests, execute the following command:
+To run the tests, execute the following command:
 
     venv/bin/python manage.py test
 
-## Contributing workflow
+## Scope
 
-The following steps will work for users with push permissions on this
-repository.
+This implementation focuses on the **confidentiality of data on an untrusted
+server.**
 
-1.  Download this repository from GitHub and bootstrap the environment.
+Given the server database file (stored in `db.sqlite3`), an attacker shouldn't
+be able to glean any information about the data storted within (apart from the
+number of records stored, obviously).
 
-        git clone https://github.com/Pringley/edb.git
-        cd edb
-        python3.4 bootstrap.py
+Each query naturally leaks some information to the server. Each search reveals
+traffic analysis data (although the plaintexts are not revealed).
 
-2.  Make each logical set of changes in a separate feature branch.
+We essentially **ignored securing the transport layer.**
 
-    Run the following commands to create a new feature branch (replace
-    `NEWBRANCH` with the name of your feature):
+Our client and server use HTTP to communicate. To secure the transport layer,
+we could simply use HTTPS. (This is typically configured on the host computer.)
 
-        git fetch origin
-        git checkout -b NEWBRANCH origin/master
+## Crypto
 
-    Make a commit for each individual change. Your commits will be saved to
-    your local `NEWBRANCH`.
+Our database is built around the [searchable scheme created by Dawn Song et
+al.](http://www.cs.berkeley.edu/~dawnsong/papers/se.pdf) (see Section 4.4).
 
-        git add changed_file1 changed_file2
-        git commit --message="SUMMARY OF CHANGES"
+Searchable fields are encrypted with Song et al.'s scheme.
 
-4.  When your feature is complete, push your changes back to GitHub with the
-    following commands:
+Arithmetic fields are encrypted with the [Paillier
+cryptosystem](https://en.wikipedia.org/wiki/Paillier_cryptosystem).
 
-        git push origin NEWBRANCH
+## Code layout
 
-    Then open a pull request by visiting the following URL:
+The project package is `logdb/`. It relies on a support library we wrote called
+`edb/`.
 
-    <https://github.com/Pringley/edb/compare/master...NEWBRANCH>
+Our implementation of Song's scheme is primarily in `edb/client.py`. Our
+encryption of Paillier is in `edb/paillier.py`.
 
-    The group will review the pull request before merging it into `master`.
-
-### External contributors
-
-If you don't have push permissions on this repo, you can still help out by
-[forking](https://github.com/Pringley/edb/fork). This creates a copy of the
-repository under your GitHub username.
-
-1.  Instead of cloning the main repository, run:
-
-        git clone https://github.com/YOURUSERNAME/edb
-        git remote add upstream https://github.com/Pringley/edb.git
-
-2.  Now you can create new branches using these commands:
-
-        git fetch upstream
-        git checkout -b NEWBRANCH upstream/master
-
-3.  Once your changes are committed, push to your forked repo using:
-
-        git push origin NEWBRANCH
-
-    Pull requests can be opened from your repository by visiting:
-
-    <https://github.com/YOURUSERNAME/edb/compare/Pringley:master...NEWBRANCH>
+The server uses [Django REST framework](http://www.django-rest-framework.org/)
+to parse JSON queries and generate responses. The main driver code is in
+`logdb/views.py`, with the notable addition of the crypto search backend in
+`edb/server/util.py`.
