@@ -5,7 +5,10 @@ setup(
     name = "logdb",
     version = "0.0.1",
     packages = ['logdb', 'edb'],
-    scripts = glob('scripts/*.py'),
+    scripts = [
+        'scripts/client',
+        'scripts/server',
+    ],
 
     url = "https://github.com/Pringley/mpass-python",
     
