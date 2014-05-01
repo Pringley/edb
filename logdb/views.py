@@ -51,8 +51,11 @@ def correlate(request):
     src = params['source']
     dst = params['destination']
     srccount = len(Packet.objects.encrypted_filter(source=src))
-    bothcount = len(Packet.objects.encrypted_filter(**params))
-    coef = bothcount / srccount
+    if srccount == 0:
+        coef = 0
+    else:
+        bothcount = len(Packet.objects.encrypted_filter(**params))
+        coef = bothcount / srccount
     return Response({'coefficient': coef})
 
 @api_view(['GET'])
