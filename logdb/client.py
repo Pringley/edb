@@ -4,6 +4,7 @@ import requests
 import click
 import prettytable
 
+from requests.exceptions import RequestException
 from edb import crypto
 from edb.client import Client as EDBClient
 from edb.errors import EDBError
@@ -162,7 +163,10 @@ class Client(EDBClient):
         self.correlate_url = self.url + 'compute/correlate/'
 
     def request(self, method, *args, **kwargs):
-        resp = requests.request(method, *args, **kwargs)
+        try:
+            resp = requests.request(method, *args, **kwargs)
+        except RequestException as err:
+            raise EDBError('could not connect to server: ' + str(err))
         try:
             resp = resp.json()
         except:
