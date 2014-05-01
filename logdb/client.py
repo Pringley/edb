@@ -10,6 +10,8 @@ class Client(EDBClient):
         self.port = port or 8000
         self.url = 'http://{}:{}/'.format(self.host, self.port)
         self.packet_url = self.url + 'packets/'
+        self.count_url = self.url + 'compute/count/'
+        self.average_url = self.url + 'compute/average/'
 
     def search(self, **query):
         encrypted_query = self.encrypt_query(query)
@@ -21,3 +23,18 @@ class Client(EDBClient):
     def create(self, **model):
         encrypted_model = self.encrypt_model(model, paillier_fields=['length'])
         requests.post(self.packet_url, data=encrypted_model)
+
+    def count(self, **query):
+        params = self.encrypt_query(query)
+        resp = requests.get(self.count, params=params).json()
+        return int(count)
+
+    def average(self, **query):
+        params = self.encrypt_query(query)
+        key = self.keys['paillier']
+        params.update(modulus=str(key.modulus), generator=str(key.generator))
+        resp = requests.get(self.average_url, params=params)
+        resp = resp.json()
+        count = self.paillier_decrypt(resp['count'])
+        total = self.paillier_decrypt(resp['sum'])
+        return total / count
