@@ -178,9 +178,16 @@ class Client(EDBClient):
     def search(self, **query):
         encrypted_query = self.encrypt_query(query)
         resp = self.request('get', self.packet_url, params=encrypted_query)
-        return [self.decrypt_model(model, paillier_fields=['length'],
-                exclude_fields=['id'])
-                for model in resp]
+        plaintexts = []
+        for model in resp:
+            try:
+                ptxt = self.decrypt_model(model, paillier_fields=['length'],
+                        exclude_fields=['id'])
+            except EDBError:
+                # ignore undecrypted results
+                pass
+            plaintexts.append(ptxt)
+        return plaintexts
 
     def create(self, **model):
         encrypted_model = self.encrypt_model(model, paillier_fields=['length'])
