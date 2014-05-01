@@ -19,7 +19,7 @@ def run_cli():
 @click.option('--host', default='localhost',
         help='hostname of the server (default localhost)')
 @click.option('--port', default=8000,
-        help='port of the server')
+        help='port of the server (default 8000)')
 @click.option('-k', '--keyfile', default='keyfile.json',
         help='path to the keyfile (default "keyfile.json")')
 @click.pass_context

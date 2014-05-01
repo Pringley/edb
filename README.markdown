@@ -82,9 +82,46 @@ available subcommands.
 > Options:
 >
 > *   `--host=HOST`           - hostname of the server (default localhost)
-> *   `--port=PORT`           - port of the server
+> *   `--port=PORT`           - port of the server (default 8000)
 > *   `--keyfile=KEYFILE`     - path to the keyfile (default "keyfile.json")
 > *   `--help`                - Show this message and exit.
+
+For example, running `client lookup` attempts to decrypt all rows in the
+database (not guaranteed to work).
+
+    +-----------------+-----------------+-------------+--------+
+    |      source     |   destination   |   protocol  | length |
+    +-----------------+-----------------+-------------+--------+
+    |  111.221.77.158 |  129.161.75.51  |     TCP     |   57   |
+    |  129.161.75.51  |  129.161.75.255 | DB-LSP-DISC |  195   |
+    |  129.161.75.51  | 255.255.255.255 | DB-LSP-DISC |  195   |
+    |  129.161.75.51  | 255.255.255.255 | DB-LSP-DISC |  195   |
+    |  129.161.75.158 | 239.255.255.250 |     SSDP    |  175   |
+    |  129.161.75.158 | 239.255.255.250 |     SSDP    |  175   |
+    |  129.161.75.158 | 239.255.255.250 |     SSDP    |  175   |
+    |  129.161.75.51  |  192.168.1.103  |     SNMP    |  121   |
+    |  174.137.42.75  |  129.161.75.51  |     TCP     |   66   |
+    |  174.137.42.75  |  129.161.75.51  |     TCP     |   66   |
+    | 162.159.242.165 |  129.161.75.51  |     TCP     |   66   |
+    | 162.159.242.165 |  129.161.75.51  |     TCP     |   54   |
+    | 141.101.116.148 |  129.161.75.51  |     TCP     |   54   |
+    | 141.101.116.148 |  129.161.75.51  |     TCP     |   66   |
+    | 141.101.116.148 |  129.161.75.51  |     TCP     |   66   |
+    +-----------------+-----------------+-------------+--------+
+
+You can also filter by using command options:
+
+    client lookup --protocol TCP
+
+Use the `count` command to get the total number of messages from (or to) an
+address:
+
+    client count --source 162.159.242.165
+
+The `average` command asks the server to compute the average message length for
+a given query.
+
+    client average --source 129.161.75.51 --destination 255.255.255.255
 
 ## Test
 
