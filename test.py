@@ -13,12 +13,25 @@ PASSPHRASE = b'hunter2 is not a good password'
 class TestClient(TestCase):
 
     def setUp(self):
-        self.client = Client(PASSPHRASE)
+        self.client = Client()
     
     def test_encrypt(self):
         ptxt = b"test"
         ctxt = self.client.encrypt(ptxt)
         self.assertEqual(ptxt, self.client.decrypt(ctxt))
+
+    def test_keyfile(self):
+        keyinfo = crypto.generate_keyinfo(Client.KEY_SCHEMA)
+        tmpdir = tempfile.mkdtemp()
+        try:
+            filename = os.path.join(tmpdir, '.keyinfo')
+            crypto.write_keyinfo(keyinfo, filename)
+            client = Client(filename)
+            ptxt = b"test"
+            ctxt = client.encrypt(ptxt)
+            self.assertEqual(ptxt, client.decrypt(ctxt))
+        finally:
+            shutil.rmtree(tmpdir)
 
 class TestCrypto(TestCase):
 
@@ -49,12 +62,14 @@ class TestCrypto(TestCase):
 
     def test_key_serialization(self):
         tmpdir = tempfile.mkdtemp()
-        filename = os.path.join(tmpdir, '.keyinfo')
-        crypto.write_keyinfo(self.keyinfo, filename)
-        keyinfo2 = crypto.read_keyinfo(filename)
-        # self.assertEqual(self.keyinfo, keyinfo2)
-        for name, keydata in self.keyinfo.items():
-            self.assertEqual(keydata, keyinfo2[name])
+        try:
+            filename = os.path.join(tmpdir, '.keyinfo')
+            crypto.write_keyinfo(self.keyinfo, filename)
+            keyinfo2 = crypto.read_keyinfo(filename)
+            for name, keydata in self.keyinfo.items():
+                self.assertEqual(keydata, keyinfo2[name])
+        finally:
+            shutil.rmtree(tmpdir)
 
     def test_block_encrypt(self):
         key = self.keys['foo']
